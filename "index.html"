@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ro">
 <head>
@@ -381,24 +380,10 @@
             }
         };
 
-        // Randarea slide-ului selectat în Canvas
-        function renderActiveSlide() {
-            const currentSlide = slides[currentSlideIndex];
-            const palette = themePalettes[activeThemeKey];
-            const canvas = document.getElementById("slideCanvas");
-            const inner = document.getElementById("canvasInner");
-            const ind = document.getElementById("slideIndicator");
-
-            ind.innerText = `Slide ${currentSlideIndex + 1} din ${slides.length}`;
-            canvas.style.backgroundColor = palette.bg;
-            canvas.style.color = palette.textColor;
-
-            // Alocă clasa corespunzătoare fontului activ
-            canvas.className = `aspect-[16/9] w-full max-w-4xl rounded-2xl shadow-2xl relative overflow-hidden transition-all duration-300 p-8 sm:p-12 flex flex-col justify-between border border-slate-800/20 font-${activeFont}`;
-
+        // Randarea conținutului intern al unui slide pe baza layout-ului său
+        function generateSlideHTML(currentSlide, palette) {
             let htmlContent = "";
 
-            // Generarea structurilor HTML pe baza tipului de slide
             if (currentSlide.layout === "cover") {
                 htmlContent = `
                     <div class="flex-1 flex flex-col justify-center items-center text-center px-4">
@@ -415,14 +400,14 @@
                     </div>
                     <div class="flex justify-between items-center text-[10px] sm:text-xs tracking-wider uppercase opacity-65 font-semibold" style="color: ${palette.subtitleColor}">
                         <span>${currentSlide.items[0]}</span>
-                        <span>Creat pentru Canva</span>
+                        <span>${currentSlide.items[1] || ''}</span>
                     </div>
                 `;
             } else if (currentSlide.layout === "benefits") {
                 htmlContent = `
                     <div class="flex-1 flex flex-col justify-center">
                         <div class="mb-4">
-                            <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded" style="background: ${palette.accentColor}25; color: ${palette.accentColor}">STUDIRI ȘTIINȚIFICE</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded" style="background: ${palette.accentColor}25; color: ${palette.accentColor}">STUDII ȘTIINȚIFICE</span>
                             <h2 class="text-2xl sm:text-3xl font-bold mt-2" style="color: ${palette.titleColor}">${currentSlide.title}</h2>
                             <p class="text-xs sm:text-sm mt-1" style="color: ${palette.subtitleColor}">${currentSlide.subtitle}</p>
                         </div>
@@ -478,7 +463,6 @@
                             <p class="text-xs sm:text-sm" style="color: ${palette.subtitleColor}">${currentSlide.subtitle}</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center my-auto">
-                            <!-- Schiță grafică interactivă -->
                             <div class="flex justify-center">
                                 <div class="relative w-36 h-40 border-2 rounded-r-lg shadow-lg flex items-center justify-center" style="border-color: ${palette.accentColor}; background: ${palette.bg}">
                                     <div class="absolute left-0 top-0 bottom-0 w-3 border-r-2" style="background: ${palette.accentColor}; border-color: ${palette.accentColor}"></div>
@@ -507,20 +491,15 @@
                     <div class="flex-1 flex flex-col justify-center">
                         <div class="mb-4 text-center">
                             <h2 class="text-2xl sm:text-3xl font-bold" style="color: ${palette.titleColor}">${currentSlide.title}</h2>
-                            <p class="text-xs sm:text-sm mt-1" style="color: ${palette.subtitleColor}">${currentSlide.subtitle}</p>
+                            <p class="text-xs sm:text-sm" style="color: ${palette.subtitleColor}">${currentSlide.subtitle}</p>
                         </div>
-                        <div class="flex flex-col space-y-2.5 max-w-xl mx-auto w-full my-auto">
+                        <div class="space-y-3 max-w-xl mx-auto w-full my-auto">
                             ${currentSlide.items.map((item, idx) => {
                                 const parts = item.split(' — ');
                                 return `
-                                    <div class="flex items-center justify-between p-3 rounded-lg border border-black/5" style="background: ${palette.titleColor + '04'}">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center shadow-sm" style="background: ${palette.accentColor}; color: ${palette.bg}">
-                                                ${idx + 1}
-                                            </div>
-                                            <span class="text-xs sm:text-sm font-semibold" style="color: ${palette.titleColor}">${parts[0]}</span>
-                                        </div>
-                                        <span class="text-xs font-bold px-2.5 py-1 rounded shrink-0" style="background: ${palette.accentColor}18; color: ${palette.titleColor}">
+                                    <div class="flex justify-between items-center p-3 rounded-xl border border-dashed border-slate-300" style="background: ${palette.titleColor + '03'}">
+                                        <span class="text-xs sm:text-sm font-semibold" style="color: ${palette.titleColor}">${parts[0]}</span>
+                                        <span class="text-xs font-mono font-bold px-2 py-1 rounded bg-amber-500/10 text-amber-600" style="color: ${palette.accentColor}">
                                             ${parts[1] || ''}
                                         </span>
                                     </div>
@@ -531,39 +510,58 @@
                 `;
             } else if (currentSlide.layout === "conclusion") {
                 htmlContent = `
-                    <div class="flex-1 flex flex-col justify-center items-center text-center px-4">
-                        <span class="text-3xl mb-3">⭐</span>
-                        <h2 class="text-xl sm:text-2xl font-bold font-playfair italic max-w-2xl leading-normal mb-3" style="color: ${palette.titleColor}">
+                    <div class="flex-1 flex flex-col justify-center items-center text-center max-w-2xl mx-auto px-4">
+                        <span class="text-4xl mb-4">✨</span>
+                        <h2 class="text-2xl sm:text-4xl font-bold italic font-playfair mb-4 leading-relaxed" style="color: ${palette.titleColor}">
                             "${currentSlide.title}"
                         </h2>
-                        <p class="text-xs font-semibold tracking-wider uppercase mb-6" style="color: ${palette.accentColor}">
+                        <p class="text-xs sm:text-sm font-bold uppercase tracking-widest mb-8" style="color: ${palette.accentColor}">
                             ${currentSlide.subtitle}
                         </p>
-                        <div class="h-px w-20 bg-slate-400/30 my-4 mx-auto"></div>
-                        <div class="text-xs space-y-1" style="color: ${palette.subtitleColor}">
-                            <p class="font-bold">${currentSlide.items[0]}</p>
-                            <p class="opacity-80">${currentSlide.items[1]}</p>
+                        <div class="p-4 rounded-xl border border-black/5 w-full bg-white/40 backdrop-blur-sm">
+                            <p class="text-xs font-semibold opacity-75">${currentSlide.items[0]}</p>
+                            <p class="text-sm font-bold mt-1" style="color: ${palette.titleColor}">${currentSlide.items[1] || ''}</p>
                         </div>
                     </div>
                 `;
             }
-
-            inner.innerHTML = htmlContent;
-
-            // Transmitere modificări către vizualizarea de prezentare (Fullscreen)
-            if (isPresenting) {
-                const presSlide = document.getElementById("presentationSlide");
-                presSlide.style.backgroundColor = palette.bg;
-                presSlide.style.color = palette.textColor;
-                presSlide.className = `aspect-[16/9] w-full max-w-5xl rounded-2xl shadow-2xl relative overflow-hidden p-16 flex flex-col justify-between transition-all duration-300 font-${activeFont}`;
-                presSlide.innerHTML = htmlContent;
-                document.getElementById("presIndicator").innerText = `${currentSlideIndex + 1} / ${slides.length}`;
-            }
-
-            updateThumbnailHighlight();
+            return htmlContent;
         }
 
-        // Generare câmpuri editor în panou stâng pe baza slide-ului curent
+        // Randarea slide-ului selectat în Canvas și sincronizarea cu prezentarea
+        function renderActiveSlide() {
+            const currentSlide = slides[currentSlideIndex];
+            const palette = themePalettes[activeThemeKey];
+            
+            // Actualizare elemente Workspace
+            const canvas = document.getElementById("slideCanvas");
+            const inner = document.getElementById("canvasInner");
+            const ind = document.getElementById("slideIndicator");
+
+            ind.innerText = `Slide ${currentSlideIndex + 1} din ${slides.length}`;
+            canvas.style.backgroundColor = palette.bg;
+            canvas.style.color = palette.textColor;
+            canvas.className = `aspect-[16/9] w-full max-w-4xl rounded-2xl shadow-2xl relative overflow-hidden transition-all duration-300 p-8 sm:p-12 flex flex-col justify-between border border-slate-800/20 font-${activeFont}`;
+            
+            inner.innerHTML = generateSlideHTML(currentSlide, palette);
+
+            // Sincronizare cu ecranul de prezentare Full Screen dacă e deschis
+            if (isPresenting) {
+                const presCanvas = document.getElementById("presentationSlide");
+                const presIndicator = document.getElementById("presIndicator");
+                
+                presIndicator.innerText = `${currentSlideIndex + 1} / ${slides.length}`;
+                presCanvas.style.backgroundColor = palette.bg;
+                presCanvas.style.color = palette.textColor;
+                presCanvas.className = `aspect-[16/9] w-full max-w-5xl rounded-2xl shadow-2xl relative overflow-hidden p-16 flex flex-col justify-between transition-all duration-300 font-${activeFont}`;
+                presCanvas.innerHTML = generateSlideHTML(currentSlide, palette);
+            }
+
+            // Evidențiere miniatură activă
+            updateActiveThumbnail();
+        }
+
+        // Populare formulare din panoul stâng de editare
         function populateEditorInputs() {
             const currentSlide = slides[currentSlideIndex];
             document.getElementById("editorTitle").value = currentSlide.title;
@@ -573,102 +571,43 @@
             inputsContainer.innerHTML = "";
 
             currentSlide.items.forEach((item, idx) => {
-                const wrapper = document.createElement("div");
-                wrapper.className = "flex flex-col space-y-1";
-                
-                const label = document.createElement("label");
-                label.className = "text-[9px] text-slate-500 font-bold uppercase tracking-wider";
-                label.innerText = `Subpunctul ${idx + 1}`;
-
-                const input = document.createElement("textarea");
-                input.className = "w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none";
-                input.rows = 2;
-                input.value = item;
-                input.oninput = function() {
-                    updateSlideItemText(idx, this.value);
-                };
-
-                wrapper.appendChild(label);
-                wrapper.appendChild(input);
-                inputsContainer.appendChild(wrapper);
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "space-y-1";
+                itemDiv.innerHTML = `
+                    <span class="text-[9px] font-bold text-slate-500 block">Punct / Element ${idx + 1}</span>
+                    <textarea oninput="updateSlideItem(${idx}, this.value)" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:ring-2 focus:ring-purple-500 focus:outline-none transition resize-none">${item}</textarea>
+                `;
+                inputsContainer.appendChild(itemDiv);
             });
         }
 
-        // Actualizare live a textelor prin evenimente
-        function updateSlideText(key, val) {
-            slides[currentSlideIndex][key] = val;
+        // Live typing: actualizare titlu sau subtitlu
+        function updateSlideText(field, val) {
+            slides[currentSlideIndex][field] = val;
             renderActiveSlide();
-            renderThumbnails();
         }
 
-        function updateSlideItemText(idx, val) {
+        // Live typing: actualizare sub-elemente din listă
+        function updateSlideItem(idx, val) {
             slides[currentSlideIndex].items[idx] = val;
             renderActiveSlide();
-            renderThumbnails();
         }
 
-        // Modificare Font
-        function changeFont(fontKey) {
-            activeFont = fontKey;
-            renderActiveSlide();
+        // Navigare slide-uri
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                currentSlideIndex++;
+                renderActiveSlide();
+                populateEditorInputs();
+            }
         }
 
-        // Modificare Temă
-        function changeTheme(themeKey) {
-            activeThemeKey = themeKey;
-            renderActiveSlide();
-            renderThumbnails();
-        }
-
-        // Construire navigator cu miniaturi (thumbnails)
-        function renderThumbnails() {
-            const container = document.getElementById("thumbnailContainer");
-            container.innerHTML = "";
-
-            slides.forEach((slide, idx) => {
-                const thumb = document.createElement("button");
-                thumb.onclick = () => selectSlide(idx);
-                thumb.id = `thumb-${idx}`;
-                
-                const isSelected = idx === currentSlideIndex;
-                const palette = themePalettes[activeThemeKey];
-
-                thumb.className = `w-28 aspect-[16/9] shrink-0 rounded-lg border text-left p-2 transition-all duration-200 flex flex-col justify-between overflow-hidden relative ${
-                    isSelected ? 'ring-2 ring-purple-500 border-transparent scale-105 shadow-md' : 'border-slate-800 bg-slate-950 hover:border-slate-700'
-                }`;
-
-                thumb.style.backgroundColor = isSelected ? palette.bg : '#090d1a';
-                thumb.style.color = isSelected ? palette.textColor : '#94a3b8';
-
-                let titlePreview = slide.title.length > 20 ? slide.title.substring(0, 18) + "..." : slide.title;
-
-                thumb.innerHTML = `
-                    <span class="text-[8px] font-bold uppercase tracking-wider block opacity-70">${idx + 1}</span>
-                    <span class="text-[9px] font-bold line-clamp-2 leading-tight block mt-1" style="color: ${isSelected ? palette.titleColor : '#cbd5e1'}">${titlePreview}</span>
-                    <div class="mt-auto h-1 w-6 rounded-full" style="background-color: ${isSelected ? palette.accentColor : '#475569'}"></div>
-                `;
-
-                container.appendChild(thumb);
-            });
-        }
-
-        function updateThumbnailHighlight() {
-            slides.forEach((_, idx) => {
-                const thumb = document.getElementById(`thumb-${idx}`);
-                if (!thumb) return;
-                const isSelected = idx === currentSlideIndex;
-                const palette = themePalettes[activeThemeKey];
-
-                if (isSelected) {
-                    thumb.className = "w-28 aspect-[16/9] shrink-0 rounded-lg border text-left p-2 transition-all duration-200 flex flex-col justify-between overflow-hidden relative ring-2 ring-purple-500 border-transparent scale-105 shadow-md";
-                    thumb.style.backgroundColor = palette.bg;
-                    thumb.style.color = palette.textColor;
-                } else {
-                    thumb.className = "w-28 aspect-[16/9] shrink-0 rounded-lg border text-left p-2 transition-all duration-200 flex flex-col justify-between overflow-hidden relative border-slate-800 bg-slate-950 hover:border-slate-700";
-                    thumb.style.backgroundColor = '#090d1a';
-                    thumb.style.color = '#94a3b8';
-                }
-            });
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                renderActiveSlide();
+                populateEditorInputs();
+            }
         }
 
         function selectSlide(index) {
@@ -677,27 +616,21 @@
             populateEditorInputs();
         }
 
-        function nextSlide() {
-            if (currentSlideIndex < slides.length - 1) {
-                currentSlideIndex++;
-                selectSlide(currentSlideIndex);
-            } else if (isPresenting) {
-                closePresentation();
-            }
+        // Schimbare stil font
+        function changeFont(fontKey) {
+            activeFont = fontKey;
+            renderActiveSlide();
         }
 
-        function prevSlide() {
-            if (currentSlideIndex > 0) {
-                currentSlideIndex--;
-                selectSlide(currentSlideIndex);
-            }
+        // Schimbare paletă cromatică
+        function changeTheme(themeKey) {
+            activeThemeKey = themeKey;
+            renderActiveSlide();
         }
 
-        // Zoom funcțional pe Canvas
+        // Control Zoom Canvas
         function zoomCanvas(amount) {
-            zoomLevel += amount;
-            if (zoomLevel < 60) zoomLevel = 60;
-            if (zoomLevel > 140) zoomLevel = 140;
+            zoomLevel = Math.max(50, Math.min(150, zoomLevel + amount));
             document.getElementById("zoomLabel").innerText = `${zoomLevel}%`;
             document.getElementById("slideCanvas").style.transform = `scale(${zoomLevel / 100})`;
         }
@@ -708,7 +641,41 @@
             document.getElementById("slideCanvas").style.transform = "scale(1)";
         }
 
-        // Mod Prezentare (Fullscreen)
+        // Randare structură minitaturi (Thumbnails din subsol)
+        function renderThumbnails() {
+            const container = document.getElementById("thumbnailContainer");
+            container.innerHTML = "";
+
+            slides.forEach((slide, idx) => {
+                const thumb = document.createElement("button");
+                thumb.id = `thumb-${idx}`;
+                thumb.onclick = () => selectSlide(idx);
+                thumb.className = "w-24 aspect-[16/9] bg-slate-800 rounded-lg border-2 border-transparent hover:border-purple-500 shrink-0 flex flex-col justify-between p-1.5 transition text-left overflow-hidden relative group";
+                thumb.innerHTML = `
+                    <span class="text-[8px] text-slate-400 font-bold block truncate group-hover:text-purple-400 transition">${slide.title}</span>
+                    <span class="absolute bottom-1 right-1.5 text-[9px] font-mono font-bold bg-slate-950/60 px-1 rounded text-slate-500">${idx + 1}</span>
+                `;
+                container.appendChild(thumb);
+            });
+            updateActiveThumbnail();
+        }
+
+        function updateActiveThumbnail() {
+            slides.forEach((_, idx) => {
+                const thumb = document.getElementById(`thumb-${idx}`);
+                if (thumb) {
+                    if (idx === currentSlideIndex) {
+                        thumb.classList.remove("border-transparent", "bg-slate-800");
+                        thumb.classList.add("border-purple-500", "bg-slate-900", "shadow-md");
+                    } else {
+                        thumb.classList.remove("border-purple-500", "bg-slate-900", "shadow-md");
+                        thumb.classList.add("border-transparent", "bg-slate-800");
+                    }
+                }
+            });
+        }
+
+        // Management Mod Prezentare Full-Screen
         function openPresentation() {
             isPresenting = true;
             document.getElementById("presentationOverlay").classList.remove("hidden");
@@ -722,62 +689,51 @@
             document.getElementById("presentationOverlay").classList.remove("flex");
         }
 
-        // Modal de sinteză text
+        // Control Modal Sumar / Copiere Text Structurat
         function toggleSummaryModal(show) {
             const modal = document.getElementById("summaryModal");
             if (show) {
                 modal.classList.remove("hidden");
-                
-                let summaryHTML = "";
-                slides.forEach((slide) => {
-                    summaryHTML += `
-                        <div class="border-b border-slate-800 pb-3 mb-3">
-                            <h4 class="font-bold text-purple-400 text-sm">Slide ${slide.id}: ${slide.title}</h4>
-                            <p class="text-[11px] text-slate-400 italic mb-2">${slide.subtitle}</p>
-                            <ul class="list-disc list-inside space-y-1 text-xs text-slate-300">
-                                ${slide.items.map(i => `<li>${i}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                });
-                document.getElementById("summaryModalContent").innerHTML = summaryHTML;
+                generateSummaryReport();
             } else {
                 modal.classList.add("hidden");
             }
         }
 
-        // Copiere în clipboard utilizând metodă fallback pentru iframe-uri
+        function generateSummaryReport() {
+            const contentZone = document.getElementById("summaryModalContent");
+            let textOutput = "";
+
+            slides.forEach((slide, idx) => {
+                textOutput += `
+                    <div class="mb-4 p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-xs">
+                        <span class="text-purple-400 font-bold"># SLIDE ${idx + 1} (${slide.layout.toUpperCase()})</span><br/>
+                        <span class="text-slate-400">TITLU:</span> ${slide.title}<br/>
+                        <span class="text-slate-400">SUBTITLU:</span> ${slide.subtitle}<br/>
+                        <span class="text-slate-400">CONȚINUT:</span><br/>
+                        ${slide.items.map(i => ` • ${i}`).join('<br/>')}
+                    </div>
+                `;
+            });
+            contentZone.innerHTML = textOutput;
+        }
+
         function copyToClipboard() {
-            let textToCopy = "=== PROIECTUL MEU DESPRE CĂRȚI (PENTRU CANVA) ===\n\n";
-            slides.forEach((slide) => {
-                textToCopy += `SLIDE ${slide.id}: ${slide.title}\n`;
-                textToCopy += `Subtitlu: ${slide.subtitle}\n`;
-                textToCopy += `Conținut:\n`;
-                slide.items.forEach(i => {
-                    textToCopy += `- ${i}\n`;
-                });
-                textToCopy += "\n-------------------------------------\n\n";
+            let plainText = "";
+            slides.forEach((slide, idx) => {
+                plainText += `SLIDE ${idx + 1}\nTitru: ${slide.title}\nSubtitlu: ${slide.subtitle}\nElemente:\n${slide.items.map(i => `- ${i}`).join('\n')}\n\n`;
             });
 
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = textToCopy;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-
-            const btn = document.getElementById("copyBtn");
-            const originalText = btn.innerText;
-            btn.innerText = "✓ Copiat cu succes!";
-            btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow transition";
-            
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.className = "bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow transition";
-            }, 2000);
+            navigator.clipboard.writeText(plainText).then(() => {
+                const btn = document.getElementById("copyBtn");
+                btn.innerText = "Copiat cu succes! ✓";
+                btn.classList.replace("bg-purple-600", "bg-emerald-600");
+                setTimeout(() => {
+                    btn.innerText = "Copiază tot textul";
+                    btn.classList.replace("bg-emerald-600", "bg-purple-600");
+                }, 2000);
+            });
         }
     </script>
 </body>
 </html>
-
-```
